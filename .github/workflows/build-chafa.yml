@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       chafa_version:
-        description: 'Chafa version to build'
+        description: "Chafa version to build"
         required: true
-        default: '1.16'
+        default: "1.18"
 
 jobs:
   build-windows:
@@ -43,7 +43,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        arch: [amd64,  386]
+        arch: [amd64, 386]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -60,7 +60,7 @@ jobs:
             pkg-config \
             build-essential \
             libglib2.0-dev
-          
+
           case "${{ matrix.arch }}" in
             amd64)
               ;;
@@ -154,11 +154,11 @@ jobs:
         run: |
           mkdir -p libs/
           cp -r artifacts/. libs/
-          
+
       - name: Generate checksums and build info
         run: |
           find libs/ -name "*.so" -o -name "*.dylib" -o -name "*.dll" | xargs sha256sum > libs/CHECKSUMS.txt
-          echo "Chafa Version: ${{ github.event.inputs.chafa_version || '1.16' }}" > libs/BUILD_INFO.txt
+          echo "Chafa Version: ${{ github.event.inputs.chafa_version || '1.18' }}" > libs/BUILD_INFO.txt
           echo "Build Date: $(date)" >> libs/BUILD_INFO.txt
           echo "Workflow: ${{ github.run_id }}" >> libs/BUILD_INFO.txt
 
