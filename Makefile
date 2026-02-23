@@ -75,14 +75,17 @@ $(LIBDIR)/darwin_arm64/libchafa.dylib:
 	cp build/chafa-darwin-arm64/chafa/.libs/libchafa.dylib $(CURDIR)/$(LIBDIR)/darwin_arm64/libchafa.dylib
 
 # Windows x64 (MinGW)
+# LDFLAGS statically links GLib and its dependencies into the DLL so that
+# only libchafa.dll needs to be distributed (no MinGW runtime DLLs required).
 $(LIBDIR)/windows_amd64/libchafa.dll:
 	mkdir -p $(CURDIR)/$(LIBDIR)/windows_amd64 && \
-	mkdir -p build/chafa-win-x64 && cd build/chafa-win-x64 && \
+	mkdir -p build/chafa-win-amd64 && cd build/chafa-win-amd64 && \
 	git clone --branch $(CHAFAVERSION) --depth 1 https://github.com/hpjansson/chafa.git . && \
 	CC=x86_64-w64-mingw32-gcc \
-	CFLAGS="" LDFLAGS="" \
+	CFLAGS="-O2" \
+	LDFLAGS="-static-libgcc" \
 	./autogen.sh --without-tools --host=x86_64-w64-mingw32 && make
-	cp build/chafa-win-x64/chafa/.libs/libchafa-0.dll $(CURDIR)/$(LIBDIR)/windows_amd64/libchafa.dll
+	cp build/chafa-win-amd64/chafa/.libs/libchafa-0.dll $(CURDIR)/$(LIBDIR)/windows_amd64/libchafa.dll
 
 clean:
 	rm -rf build $(LIBDIR)/
