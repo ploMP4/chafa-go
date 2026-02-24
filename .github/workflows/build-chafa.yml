@@ -13,7 +13,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        arch: [x64]
+        arch: [amd64]
 
     steps:
       - uses: actions/checkout@v4
@@ -26,11 +26,36 @@ jobs:
           update: true
           install: >
             mingw-w64-x86_64-toolchain mingw-w64-x86_64-glib2
+            mingw-w64-x86_64-pcre2 mingw-w64-x86_64-libiconv
+            mingw-w64-x86_64-gettext mingw-w64-x86_64-libffi
             make autoconf automake libtool pkg-config git
 
       - name: Build Windows ${{ matrix.arch }}
         shell: msys2 {0}
         run: |
+          # Convert -lFOO to -Wl,/mingw64/lib/libFOO.a when a static archive exists,
+          # keeping Windows system libs (ws2_32, ole32, etc.) dynamic since they
+          # have no static archives. The -Wl, prefix is critical: libtool strips
+          # bare .a paths from shared library link commands, but passes -Wl, flags
+          # through to the linker unchanged, so GLib symbols get embedded in the DLL.
+          GLIB_STATIC=""
+          for lib in $(pkg-config --libs-only-l --static glib-2.0); do
+            name="${lib#-l}"
+            path="/mingw64/lib/lib${name}.a"
+            if [ -f "$path" ]; then
+              GLIB_STATIC="$GLIB_STATIC -Wl,$path"
+            else
+              GLIB_STATIC="$GLIB_STATIC $lib"
+            fi
+          done
+          # libintl.a has a transitive dep on libiconv not listed by glib-2.0's pkg-config
+          if [ -f "/mingw64/lib/libiconv.a" ]; then
+            GLIB_STATIC="$GLIB_STATIC -Wl,/mingw64/lib/libiconv.a"
+          fi
+          # -DGLIB_STATIC_COMPILATION drops __declspec(dllimport) from GLib headers
+          # so symbol names in the .o files match the static archive (g_free not __imp_g_free)
+          export GLIB_CFLAGS="$(pkg-config --cflags glib-2.0) -DGLIB_STATIC_COMPILATION -DPCRE2_STATIC"
+          export GLIB_LIBS="$GLIB_STATIC"
           make libs/windows_amd64/libchafa.dll
 
       - name: Upload artifacts

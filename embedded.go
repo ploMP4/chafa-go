@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
 	"path/filepath"
 	"runtime"
 	"sync"
@@ -85,7 +86,8 @@ func extractEmbeddedLibrary() (string, error) {
 		}
 
 		// Path to the library within the embedded filesystem
-		libPath := filepath.Join("libs", platformDir, libName)
+		// embed.FS always uses forward slashes, so use path.Join (not filepath.Join)
+		libPath := path.Join("libs", platformDir, libName)
 
 		// Where the library will be extracted
 		extractedPath = filepath.Join(tempDir, libName)
