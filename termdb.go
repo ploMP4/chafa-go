@@ -1,7 +1,5 @@
 package chafa
 
-import "unsafe"
-
 var (
 	// Creates a new, blank [TermDb].
 	TermDbNew func() *TermDb
@@ -33,21 +31,11 @@ var (
 )
 
 func TermDbDetect(termDb *TermDb, envp []string) *TermInfo {
-	ptrs := make([]*byte, len(envp))
-	allocated := make([][]byte, len(envp))
-
+	strv := make([]*byte, len(envp)+1)
 	for i, s := range envp {
-		cstr := append([]byte(s), 0)
-		allocated[i] = cstr
-		ptrs[i] = &cstr[0]
+		strv[i] = &append([]byte(s), 0)[0]
 	}
-
-	ptrBlock := make([]uintptr, len(ptrs))
-	for i, p := range ptrs {
-		ptrBlock[i] = uintptr(unsafe.Pointer(p))
-	}
-
-	return termDbDetect(termDb, (**byte)(unsafe.Pointer(&ptrBlock[0])))
+	return termDbDetect(termDb, &strv[0])
 }
 
 type TermDb struct {
