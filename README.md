@@ -85,6 +85,28 @@ func main() {
 }
 ```
 
+## Animated GIFs
+
+Run the playback example from the repository root in an ANSI terminal:
+
+```bash
+go run ./examples/gif -width 80 -height 24 path/to/animation.gif
+```
+
+The example preserves the aspect ratio, uses the GIF's frame delays and loop
+count, and restores the terminal when it finishes or you press Ctrl+C. Use
+`-once` to play a looping GIF once. GIFs with no frame delay use 50 ms in this
+example. Set the width and height to fit your terminal; output uses character
+symbols and the terminal's detected color mode.
+
+For your own player, `chafa.LoadGIF(path)` returns an `Animation` containing
+fully composited RGBA8 frames, their `time.Duration` delays, the logical screen
+size, and the loop count. All frames are loaded into memory. Draw each frame's
+`Pixels` with `CanvasDrawAllPixels`, `CHAFA_PIXEL_RGBA8_UNASSOCIATED`, and a
+rowstride of `animation.Width * 4`. `CanvasPrintString` returns Go-owned terminal
+output and releases its native buffers, making it suitable for continuous
+playback. `Load` continues to return just the first frame of a GIF.
+
 ## Contributing
 
 All contributions are welcome! If you're planning a significant change or you're unsure about an idea, please open an issue first so we can discuss it in detail.
