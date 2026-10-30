@@ -1,6 +1,9 @@
 package chafa
 
-import "unsafe"
+import (
+	"strings"
+	"unsafe"
+)
 
 var (
 	// Creates a new canvas with the specified configuration. The canvas makes
@@ -75,6 +78,10 @@ var (
 	// They must be printed in sequence, exactly as they appear.
 	CanvasPrintRowsStrv func(canvas *Canvas, termInfo *TermInfo) unsafe.Pointer
 
+	// Frees a NULL-terminated array returned by [CanvasPrintRows], including
+	// each GString in the array. Passing nil is allowed.
+	FreeGStringArray func(array unsafe.Pointer)
+
 	// Returns the character at cell (x, y). The coordinates are zero-indexed.
 	// For double-width characters, the leftmost cell will contain the character
 	// and the rightmost cell will contain 0.
@@ -123,6 +130,25 @@ var (
 	// according to the canvas mode (truecolor or indexed).
 	CanvasSetRawColorsAt func(canvas *Canvas, x, y, fg, bg int32)
 )
+
+// CanvasPrintString renders canvas into a Go-owned string and frees the native
+// output buffers. It is useful for repeated rendering, such as animation.
+func CanvasPrintString(canvas *Canvas, termInfo *TermInfo) string {
+	var rows unsafe.Pointer
+	var count int32
+	CanvasPrintRows(canvas, termInfo, &rows, &count)
+	defer FreeGStringArray(rows)
+
+	var output strings.Builder
+	symbols := CanvasConfigGetPixelMode(CanvasPeekConfig(canvas)) == CHAFA_PIXEL_MODE_SYMBOLS
+	for i, row := range unsafe.Slice((**GString)(rows), int(count)) {
+		if symbols && i > 0 {
+			output.WriteByte('\n')
+		}
+		output.WriteString(row.String())
+	}
+	return output.String()
+}
 
 type Canvas struct {
 	Refs int32

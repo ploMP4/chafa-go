@@ -35,6 +35,7 @@ func init() {
 		purego.RegisterLibFunc(&CanvasPrint, libchafa, "chafa_canvas_print")
 		purego.RegisterLibFunc(&CanvasPrintRows, libchafa, "chafa_canvas_print_rows")
 		purego.RegisterLibFunc(&CanvasPrintRowsStrv, libchafa, "chafa_canvas_print_rows_strv")
+		purego.RegisterLibFunc(&FreeGStringArray, libchafa, "chafa_free_gstring_array")
 		purego.RegisterLibFunc(&CanvasGetCharAt, libchafa, "chafa_canvas_get_char_at")
 		purego.RegisterLibFunc(&CanvasSetCharAt, libchafa, "chafa_canvas_set_char_at")
 		purego.RegisterLibFunc(&CanvasGetColorsAt, libchafa, "chafa_canvas_get_colors_at")
@@ -1016,6 +1017,8 @@ type GError struct {
 	Message string
 }
 
+// Load decodes a still image. For GIFs it returns only the first frame;
+// use [LoadGIF] to load all animation frames and their timing information.
 func Load(path string) (pixels []uint8, width, height int32, err error) {
 	file, err := os.Open(path)
 	if err != nil {
